@@ -1,17 +1,18 @@
 # plan.md — JKEE EPC ERP (Post-MVP) Plan (Updated)
 
 ## Objectives
-- **Keep Phase 1 stable** while Phase 2 features are added (no regressions in registers, hooks, masking, PDFs, public links, AI reader).
-- **Complete and lock Phase 2a (P0): Offline Mobile Mode** for `/mobile` with reliable outbox sync, idempotency, and clear UX.
-- **Start Phase 2b–2e** (AI Co-Pilot, rollback, mailboxes, PDF studio) as separate, testable increments.
-- **Pause for user guidance** on Phase 2 priority and scope before major new buildouts.
+- **Keep Phase 1 stable** while Phase 2/3 features are added (no regressions in registers, hooks, masking, PDFs, public links, AI reader).
+- **Deliver Phase 2 automation/intelligence** as modular increments, each with clear UI + backend hooks and tenant isolation.
+- **Implement Phase 3: Full M1 Pre‑Tender Workflow + Post‑Award Integration**, matching the user’s detailed state machine and UX expectations.
+- **Strengthen interlinking** (tender → costing/BOQ → RFQ/vendor links → inbox replies → awards → project → procurement → PO/GRN → billing) inspired by major ERPs (Zoho/Odoo/Salesforce patterns: timeline, stage gates, approvals, traceability).
+- **Respect user constraint:** build + compile-check only; **do not run testing**. User will test.
 
 ---
 
 ## Implementation Steps
 
 ### Phase 1.5 — Verification + Polish (Completed)
-**Focus:** confirm field masking and remove rough edges before Phase 2 automation.
+**Focus:** confirm field masking and remove rough edges before Phase 2/3 automation.
 
 **Status:** ✅ Completed
 
@@ -20,11 +21,10 @@
 - Closed a critical masking leak: **line-item `amount` exposed hidden `rate`** via qty×rate.
   - Updated `SENS` masking list in `backend/seed.py` to include `amount` and other financial totals.
   - Patched existing `roles` docs in MongoDB to include the expanded masked field list (**28 fields**).
-- Regression sweep across dashboard and key registers: ✅ all green.
+- Regression sweep across dashboard and key registers: ✅ all green (at the time).
 
 **Success criteria (met)**
 - Site/store roles never see PO financials in API/UI (including item `rate`, PO totals, and item `amount`).
-- No new P0/P1 regressions in smoke suite.
 
 ---
 
@@ -34,8 +34,6 @@
 **Status:** ✅ Completed (POC + V1 integration)
 
 #### Phase 2a.1 — Core POC (Isolation) (Completed)
-**Goal:** prove offline capture + replay works end-to-end with real backend.
-
 **Backend implemented**
 - Added `backend/idempotency.py`
   - Starlette middleware honoring `Idempotency-Key` header for mutation requests.
@@ -53,9 +51,6 @@
   - Axios response interceptor enqueues **JSON mutations** on network failure/offline.
   - Returns a synthetic **202 Queued** response (`{_queued:true,_offline:true}`) to avoid UI crashes.
 
-**Verification (met)**
-- 5x retries with the same idempotency key → **same record id** and **only +1 DB row**.
-
 #### Phase 2a.2 — V1 App Development (Integrate into main app) (Completed)
 **UI/UX implemented**
 - Added `frontend/src/components/Outbox.jsx`
@@ -65,122 +60,207 @@
   - OutboxBar added to `/mobile` home.
   - `/mobile/outbox` route added.
   - Home shows online/offline mode text.
-  - Offline-aware save messaging (“Saved offline — will sync when back online”).
-
-**E2E verification (met)**
-- Offline save → queued as `pending`.
-- Reconnect → auto replay → queued item becomes `done`.
-- Exactly one server record created; no duplicates.
+  - Offline-aware save messaging.
 
 **Notes / constraints**
 - Current queuing is limited to JSON mutations; **multipart uploads are intentionally not queued**.
 
 ---
 
-### Phase 2b — AI Co-Pilot (Plain-language Queries) (P1) (Next)
+### Phase 2b — AI Co‑Pilot (Plain-language Queries) (P1) (Completed)
 **Core workflow:** permission-aware natural language → constrained query DSL → safe answer with citations.
 
-**Status:** ⏳ Not started (awaiting user priority/scope confirmation)
+**Status:** ✅ Completed
 
-**User stories**
-1. As a PM, I can ask “show delayed DPR approvals this week” and get a filtered list.
-2. As accounts, I can ask “total billed vs budget for Project X” and get numbers + sources.
-3. As a site engineer, I cannot retrieve masked financials via chat.
-4. As an admin, I can see citations (which registers/records were used).
-5. As a user, I can export result sets where permitted.
+**Backend**
+- Added `backend/copilot.py`
+  - Two-step pattern: LLM generates a constrained JSON plan; backend validates plan, enforces `require()` permissions and `scope_filter()`, and masks sensitive fields.
+  - Then LLM summarizes only the permission-filtered + masked rows.
+  - Model picker support:
+    - Gemini (default)
+    - Claude
+    - ChatGPT
+    - Perplexity (optional; requires `PERPLEXITY_API_KEY`, user skipped)
+  - Endpoints:
+    - `GET /api/c/{cid}/copilot/models`
+    - `POST /api/c/{cid}/copilot/query`
 
-**Steps (revised for current architecture)**
-- POC:
-  - Add `/api/copilot/query` endpoint: NL → constrained query DSL (no raw DB access from model).
-  - Enforce permissions and masking at the data fetch layer (reuse existing `require()` + masking rules).
-  - Add response citations (register + record ids).
-- V1:
-  - Add Copilot panel in Dashboard.
-  - Provide “Suggested prompts” by role.
+**Frontend**
+- Added `frontend/src/components/CoPilot.jsx` floating panel (global in Shell)
+  - Suggested prompts
+  - Model selector
+  - Chat UI with citations badges
 
-**Success criteria**
-- Cannot exfiltrate masked fields via prompt injection.
-- Useful answers on seeded demo data with citations.
+**Security / correctness**
+- Permission enforcement: module-level `require()` is applied to the register in plan.
+- Masking enforcement: sensitive fields are replaced with `••••` for restricted roles, and the model is instructed not to guess masked values.
+
+**Note**
+- “Option to select via Google login” is interpreted as *UI selection for provider*; the system does not use Google OAuth tokens as LLM credentials. Perplexity remains disabled unless the admin configures a key.
 
 ---
 
-### Phase 2c — Super Admin 24h Cascading Rollback (P1)
+### Phase 2c — Super Admin 24h Cascading Rollback (P1) (Completed)
 **Core workflow:** reversible operations across registers + hooks.
 
-**Status:** ⏳ Not started (awaiting user priority/scope confirmation)
+**Status:** ✅ Completed (V1)
 
-**User stories**
-1. As super admin, I can roll back a mistaken record and linked stock/budget effects.
-2. As super admin, I can preview what will be reversed.
-3. Rollback is allowed only within 24 hours.
-4. Audit trail captures rollback reason and affected entities.
-5. No partial rollback states.
+**Backend**
+- Added `backend/rollback.py`
+  - `GET /api/admin/rollback/recent`
+  - `GET /api/admin/rollback/preview/{seq}`
+  - `POST /api/admin/rollback/execute/{seq}`
+  - Reverses record state using audit chain LIFO restore.
+  - Reverses linked side-effects (currently):
+    - `stock_ledger` compensating entries + mark originals reversed
+    - `cost_postings` rollback + project budget actual adjustment
+    - pending `vouchers` deletion
+    - alert cleanup
+  - Super Admin only; 24h window.
 
-**Steps**
-- POC:
-  - Introduce event log / operation journal (or reuse audit) with compensating actions.
-  - Cover 1–2 critical flows first (e.g., DPR approval → stock/budget hooks).
-- V1:
-  - Rollback UI with preview + safety checks.
-
-**Success criteria**
-- No orphaned linked records after rollback in covered flows.
+**Frontend**
+- Added `frontend/src/pages/Rollback.jsx` and route `/admin/rollback`
+  - Recent list
+  - Preview + reason capture
+  - Execute rollback
 
 ---
 
-### Phase 2d — Connected Mailboxes (IMAP ingestion) (P1)
+### Phase 2d — Connected Mailboxes (IMAP ingestion) (P1) (Completed)
 **Core workflow:** ingest inbound emails → match to vendor/RFQ/project timeline.
 
-**Status:** ⏳ Not started (awaiting user priority/scope confirmation)
+**Status:** ✅ Completed (Admin UI + ingestion endpoints)
 
-**User stories**
-1. As procurement, I can connect an IMAP mailbox and ingest emails.
-2. As procurement, emails auto-match to RFQs/quotes by token/subject.
-3. Users can see an email timeline inside a project.
-4. Admin can pause ingestion and view errors.
-5. Tenant isolation preserved.
+**Backend**
+- Added `backend/mailbox.py`
+  - Admin mailbox CRUD:
+    - `GET /api/c/{cid}/mailboxes`
+    - `POST /api/c/{cid}/mailboxes`
+    - `DELETE /api/c/{cid}/mailboxes/{mid}`
+  - Manual sync:
+    - `POST /api/c/{cid}/mailboxes/{mid}/sync`
+  - Inbox timeline read:
+    - `GET /api/c/{cid}/inbox`
+    - `GET /api/c/{cid}/inbox/{eid}`
+  - Matching rules (MVP): sender → vendor; subject/body token/RFQ number → RFQ; RFQ → project.
 
-**Steps**
-- POC:
-  - IMAP pull last N messages; store metadata + attachments.
-- V1:
-  - Matching rules + timeline UI.
-
-**Success criteria**
-- Reliable ingestion without duplicates; tenant isolation preserved.
+**Frontend**
+- Added `frontend/src/pages/Mailbox.jsx` and route `/admin/mailbox`
+  - Connect mailbox dialog
+  - Sync now
+  - Timeline list + email detail viewer
 
 ---
 
-### Phase 2e — PDF Template Studio (P2)
-**Status:** ⏳ Not started
+### Phase 2e — PDF Template Studio (P2) (Completed)
+**Status:** ✅ Completed (HTML+Jinja preview + versioning)
 
-**User stories**
-1. Admin creates client-specific template variants.
-2. Preview templates with seeded data.
-3. PDFs follow branding and required fields.
-4. Hindi email templates supported.
-5. Template changes are versioned.
+**Backend**
+- Added `backend/templates_studio.py`
+  - Templates CRUD + version history.
+  - Preview endpoint for sample context:
+    - `POST /api/c/{cid}/pdf-templates/{tid}/preview`
+  - Render live record as printable HTML:
+    - `GET /api/c/{cid}/pdf-templates/{tid}/render/{record_id}`
+  - Seed defaults:
+    - `POST /api/c/{cid}/pdf-templates/seed-defaults`
+  - Uses Jinja2 with a strict environment + `inr` filter.
+  - Email templates supported (English/Hindi) as text templates.
 
-**Steps**
-- Define constrained template schema.
-- UI for field mapping → preview → save → version.
+**Frontend**
+- Added `frontend/src/pages/Templates.jsx` and route `/admin/templates`
+  - Template list
+  - Editor
+  - Preview (iframe for HTML templates; preformatted for email templates)
 
-**Success criteria**
-- 2–3 client templates produced without code changes.
+---
+
+## Phase 3: Full M1 Pre‑Tender Workflow + Post‑Award Integration (Current Priority)
+
+### Scope
+Implement the user’s full **pre‑tender** workflow (bulk intake → director approval → NIT/BOQ extraction → BOQ Studio RFQ matrix with dynamic vendor rounds → locking + MD approval → quoting → won→project). Then replicate the BOQ Studio negotiation workflow under Project procurement post‑award.
+
+### M1 State Machine (per user spec)
+`Draft` → `Pending Director` → (`Rejected` | `Approved — Study`) → `BOQ & RFQ` → `Costing Locked` → `Pending MD` → (`Rejected` | `MD Approved`) → `Quoted` → (`Won` → auto Project | `Lost`)
+
+### Backend — new file `backend/pretender.py`
+**Goal:** a clear stage-gated API (plus reusing existing generic registers where possible) matching the state machine.
+
+1. **Tender intake**
+   - `POST /api/c/{cid}/tenders/bulk-import` (Excel: Tender ID, Name, Amount, EMD, Closing Date)
+   - `POST /api/c/{cid}/tenders` basic create (5 fields; stage=`Draft`)
+2. **Director approval**
+   - `POST /api/c/{cid}/tenders/{tid}/submit-for-director`
+   - `POST /api/c/{cid}/tenders/{tid}/director-decision` (approve|reject + reason)
+3. **Document uploads + AI extraction**
+   - `POST /api/c/{cid}/tenders/{tid}/upload-nit` (extract eligibility + docs required)
+   - `POST /api/c/{cid}/tenders/{tid}/upload-boq` (extract items → tender.boq, editable)
+   - `PUT /api/c/{cid}/tenders/{tid}/eligibility` (edit tech/fin/docs, compliance Yes/No)
+4. **BOQ Studio + RFQ**
+   - `POST /api/c/{cid}/tenders/{tid}/boq/send-rfq` (multi-vendor; link + optional docs)
+   - `GET /api/c/{cid}/tenders/{tid}/boq/matrix` (items × vendors × rounds V1/V2/V3)
+   - `POST /api/c/{cid}/tenders/{tid}/boq/pick` { item_id, vendor_id, round, rate }
+   - `POST /api/c/{cid}/tenders/{tid}/boq/auto-fill` (pull from `inbox_emails`, AI parse replies, update matrix)
+5. **Locking + MD approval + quote**
+   - `POST /api/c/{cid}/tenders/{tid}/costing/lock`
+   - `POST /api/c/{cid}/tenders/{tid}/md-decision` (approve|reject)
+   - `POST /api/c/{cid}/tenders/{tid}/quote` { bid_value }
+6. **Results → post-award conversion**
+   - `POST /api/c/{cid}/tenders/{tid}/won` { loa_no, wo_value, ... } (uses existing `/award` logic + carry forward BOQ/vendor picks)
+   - `POST /api/c/{cid}/tenders/{tid}/lost` { reason, competitor, l1_value }
+7. **Pipeline reporting**
+   - `GET /api/c/{cid}/pretender/pipeline` stage counts + due soon
+
+### Frontend — M1 UX revamp
+1. Rewrite `/pages/Tenders.jsx`
+   - Horizontal **stage tab bar** (replace Kanban/Table toggle)
+   - “Add tender” (only 5 fields)
+   - “Bulk import Excel” (download sample template + upload)
+   - Stage lists: Draft / Pending Director / Rejected / Approved / BOQ & RFQ / Pending MD / Quoted / Won / Lost
+2. Rewrite Tender detail flow
+   - Stage banner + stage-specific CTAs (Submit to Director, Upload NIT, Upload BOQ, Send RFQ, Lock Costing, Request MD approval, Quote, Won/Lost)
+   - Tabs: Overview · Documents · Eligibility · **BOQ Studio** · Costing · Decision
+3. BOQ Studio UI component
+   - Items grid with dynamic vendor columns and rounds (V1/V2/V3…)
+   - “Send RFQ” multi-select vendors dialog (secure vendor links)
+   - Cell-level pick (vendor + round) and lock state.
+4. Post‑award procurement re-use
+   - Add “Procurement BOQ Studio” tab in Project detail
+   - Second-round negotiation uses the same matrix component, now scoped to project procurement.
+   - Action: “Create PO from pick”
+5. Interlinking (ERP-style)
+   - Project “Timeline” tab showing linked chain:
+     tender → NIT/BOQ docs → RFQs/vendor links → inbox emails → quotes → PO → GRN → RA bills
+
+### ERP Inspiration (Zoho/Odoo/Salesforce patterns)
+- **Stage-gated pipelines** with role-based approvals.
+- **Single record identity** + relational links (tender_id → project_id; ref pointers everywhere).
+- **Timeline / chatter** style audit of all actions and communications.
+- **Versioning** (costing versions, template versions, RFQ rounds).
+- **Locking** after approvals.
 
 ---
 
 ## Next Actions (Immediate) (Revised)
-1. **Lock in Phase 2a**
-   - (Optional hardening) add a small help tooltip in OutboxPanel explaining limitations (e.g., file uploads require online).
-   - (Optional) add a minimal `/api/sync/status` endpoint if needed later for diagnostics.
-2. **Confirm Phase 2 priority with user**
-   - Choose between Phase 2b (AI Co-Pilot), 2c (Rollback), 2d (Mailboxes), 2e (PDF Studio).
-3. Once priority is confirmed, start the **next Phase POC** with strict permission/masking enforcement and a dedicated smoke-test pass.
+1. **Phase 3 buildout (M1) priority**
+   - Implement `backend/pretender.py` state machine endpoints.
+   - Frontend rewrite for `/tenders` and BOQ Studio UX.
+   - Post-award procurement BOQ Studio on projects.
+2. **Interlinking hardening**
+   - Timeline surfaces: include mailbox emails and RFQ links in tender/project context.
+3. **Constraint enforcement**
+   - Build + compile-check only.
+   - **No testing by agent**; user will test.
 
 ---
 
 ## Overall Success Criteria
 - Phase 1 remains stable (no regressions in lifecycle hooks, masking, PDFs, public links).
 - Offline mobile mode reliably queues + syncs with idempotency and clear error handling. ✅
-- Remaining Phase 2 items have validated cores (POCs) before full UI/feature buildout.
+- Phase 2 features present and usable:
+  - AI Co-Pilot with masking/permissions ✅
+  - Rollback within 24h ✅
+  - IMAP mailbox ingestion UI ✅
+  - Template Studio with Hindi emails ✅
+- Phase 3 (M1) matches the user’s described process and ERP-quality interlinking:
+  - Bulk tender intake → approvals → AI extraction → BOQ Studio RFQ matrix → lock/MD approval → quote → award → project → procurement reuse.

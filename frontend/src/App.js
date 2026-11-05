@@ -13,6 +13,9 @@ import ModulePage from "@/pages/ModulePage";
 import { Admin, GroupMIS } from "@/pages/Admin";
 import { VendorLink, Verify, Portal } from "@/pages/Public";
 import Mobile from "@/pages/Mobile";
+import Rollback from "@/pages/Rollback";
+import Mailbox from "@/pages/Mailbox";
+import Templates from "@/pages/Templates";
 
 export default function App() {
   return (
@@ -37,6 +40,9 @@ export default function App() {
             <Route path="/projects/:id" element={<ProjectDetail />} />
             <Route path="/m/:mod" element={<ModulePage />} />
             <Route path="/admin" element={<Admin />} />
+            <Route path="/admin/rollback" element={<Rollback />} />
+            <Route path="/admin/mailbox" element={<Mailbox />} />
+            <Route path="/admin/templates" element={<Templates />} />
           </Route>
           <Route path="*" element={<Navigate to="/dashboard" />} />
         </Routes>

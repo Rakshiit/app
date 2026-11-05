@@ -9,6 +9,11 @@ import registers
 import flows_a
 import flows_b
 import seed
+import rollback
+import mailbox
+import templates_studio
+import copilot
+import pretender
 from idempotency import IdempotencyMiddleware, ensure_idempotency_indexes
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
@@ -18,6 +23,11 @@ app = FastAPI(title="JKEE EPC ERP")
 app.include_router(flows_a.router)
 app.include_router(flows_b.router)
 app.include_router(registers.router)
+app.include_router(rollback.router)
+app.include_router(mailbox.router)
+app.include_router(templates_studio.router)
+app.include_router(copilot.router)
+app.include_router(pretender.router)
 # NOTE: middleware runs for every request; keep CORS added LAST so it wraps the
 # idempotency layer (Starlette runs the outermost middleware first).
 app.add_middleware(IdempotencyMiddleware)

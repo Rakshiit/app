@@ -5,6 +5,7 @@ import { useApp } from "@/context/AppContext";
 import { MODULES } from "@/config/registers";
 import { api } from "@/lib/api";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
+import CoPilot from "@/components/CoPilot";
 
 export default function Shell() {
   const { user, company, cid, can, logout, selectCompany, loading } = useApp();
@@ -45,6 +46,9 @@ export default function Shell() {
             <Item key={m.key} to={m.path || `/m/${m.key}`} icon={m.icon} label={`${m.key} · ${m.title}`} testid={`nav-${m.key}`} />
           ))}
           {(user.is_super || can("ADMIN", "edit")) && <Item to="/admin" icon="Settings" label="Admin & Permissions" testid="nav-admin" />}
+          {(user.is_super || can("ADMIN", "edit")) && <Item to="/admin/templates" icon="FileCode2" label="Template Studio" testid="nav-templates" />}
+          {(user.is_super || can("ADMIN", "edit")) && <Item to="/admin/mailbox" icon="Mailbox" label="Vendor Mailbox" testid="nav-mailbox" />}
+          {user.is_super && <Item to="/admin/rollback" icon="Undo2" label="Rollback (24h)" testid="nav-rollback" />}
           {(user.is_super || user.role_names?.includes("Director")) && <Item to="/mis" icon="BarChart3" label="Group MIS" testid="nav-mis" />}
           <Item to="/mobile" icon="Smartphone" label="Phone version" testid="nav-mobile" />
         </nav>
@@ -93,6 +97,7 @@ export default function Shell() {
         </header>
         <main className="flex-1 overflow-y-auto erp-content p-4 scroll-thin"><Outlet /></main>
       </div>
+      <CoPilot />
     </div>
   );
 }

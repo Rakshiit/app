@@ -5,6 +5,7 @@ import { useApp } from "@/context/AppContext";
 import RegisterTable from "@/components/RegisterTable";
 import { PageHeader, Kpi, Badge, Btn } from "@/components/common";
 import { ClosureGate, BudgetTable } from "@/components/CustomTabs";
+import { ProjectBOQStudio, ProjectTimeline } from "@/components/ProjectExtras";
 import { useRegActions } from "@/pages/ModulePage";
 import { inr, dmy, numf, crore } from "@/lib/fmt";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -70,7 +71,7 @@ export function ProjectDetail() {
       </PageHeader>
       <Tabs defaultValue="overview" onValueChange={() => setK(k + 1)}>
         <TabsList className="bg-white border flex-wrap h-auto">
-          {[["overview", "Overview"], ["wbs", "WBS & Gantt"], ["sites", "Sites"], ["budget", "Budget vs actual"], ["dprs", "DPRs"], ["billing", "RA bills"], ["co", "Change orders"], ["hindrance", "Hindrances"], ["bgs", "BGs"], ["docs", "Drawings & RFIs"], ["closure", "Closure gate"]].map(([v, l]) => <TabsTrigger key={v} value={v} data-testid={`project-tab-${v}`}>{l}</TabsTrigger>)}
+          {[["overview", "Overview"], ["wbs", "WBS & Gantt"], ["sites", "Sites"], ["budget", "Budget vs actual"], ["procurement", "Procurement Studio"], ["timeline", "Timeline"], ["dprs", "DPRs"], ["billing", "RA bills"], ["co", "Change orders"], ["hindrance", "Hindrances"], ["bgs", "BGs"], ["docs", "Drawings & RFIs"], ["closure", "Closure gate"]].map(([v, l]) => <TabsTrigger key={v} value={v} data-testid={`project-tab-${v}`}>{l}</TabsTrigger>)}
         </TabsList>
         <TabsContent value="overview" className="space-y-4">
           <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
@@ -91,6 +92,8 @@ export function ProjectDetail() {
         <TabsContent value="wbs" className="space-y-3"><WbsTree rows={wbs} project={p} /><RegisterTable reg="wbs" filter={F} title="WBS items (edit)" /></TabsContent>
         <TabsContent value="sites"><RegisterTable reg="sites" filter={F} /></TabsContent>
         <TabsContent value="budget"><BudgetTable project={p} /></TabsContent>
+        <TabsContent value="procurement"><ProjectBOQStudio projectId={id} /></TabsContent>
+        <TabsContent value="timeline"><ProjectTimeline projectId={id} /></TabsContent>
         <TabsContent value="dprs"><RegisterTable reg="dprs" filter={F} /></TabsContent>
         <TabsContent value="billing" className="space-y-3"><p className="text-[12px] text-slate-500">Draft RA bill lines are created automatically when the PM approves a DPR. Billing beyond certified quantity or WO value is blocked at submission.</p><RegisterTable reg="ra_bills" filter={F} actions={actions.ra_bills} /><RegisterTable reg="invoices" filter={F} compact /></TabsContent>
         <TabsContent value="co"><RegisterTable reg="change_orders" filter={F} /></TabsContent>

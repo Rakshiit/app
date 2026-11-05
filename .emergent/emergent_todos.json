@@ -1,34 +1,38 @@
 [
   {
-    "content": "Phase 1.5: Verified field masking fix + closed line-item amount leak",
+    "content": "Phase 3 Backend: pretender.py state machine endpoints — DONE",
     "status": "completed"
   },
   {
-    "content": "Phase 1.5: Quick regression sweep on registers/dashboard — all green",
+    "content": "Phase 3 Backend: BOQ Studio matrix + auto-fill from mailbox — DONE",
     "status": "completed"
   },
   {
-    "content": "Phase 2a.1: Backend idempotency middleware — verified (replay = cached, no dupe)",
+    "content": "Phase 3 Backend: won flow carries BOQ + vendor picks into project — DONE",
     "status": "completed"
   },
   {
-    "content": "Phase 2a.1: Frontend offline queue engine (IndexedDB) — built + subscribe API",
+    "content": "Phase 3 Frontend: new Tenders pipeline page (stage tabs + add + bulk import) — DONE",
     "status": "completed"
   },
   {
-    "content": "Phase 2a.1: API client auto-enqueues mutations on offline/network error",
+    "content": "Phase 3 Frontend: TenderDetail v2 — Overview/Documents/Eligibility/BOQ Studio/Costing/Decision — DONE",
     "status": "completed"
   },
   {
-    "content": "Phase 2a.2: Outbox UI panel + status bar in /mobile",
+    "content": "Phase 3 Frontend: BOQStudio reusable component with dynamic vendor columns V1/V2/V3 — DONE",
     "status": "completed"
   },
   {
-    "content": "Phase 2a.2: Verified end-to-end offline→sync cycle + idempotency (no dupes)",
+    "content": "Phase 3 Frontend: Project Procurement BOQ Studio tab + Create PO — DONE",
     "status": "completed"
   },
   {
-    "content": "Phase 2b: AI Co-Pilot — plan + build next",
-    "status": "pending"
+    "content": "Phase 3 Frontend: Project Timeline tab — DONE",
+    "status": "completed"
+  },
+  {
+    "content": "Compile-check backend + frontend — both green. User will test.",
+    "status": "completed"
   }
 ]
