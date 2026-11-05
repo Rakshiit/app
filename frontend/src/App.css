@@ -1,0 +1,43 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+:root {
+  --brand-primary: #20309A;
+  --brand-surface: #FFFFFF;
+  --brand-accent: #BB232B;
+  --brand-primary-fg: #FFFFFF;
+  --brand-accent-fg: #FFFFFF;
+  --app-bg: #F4F6F9;
+  --border-subtle: #E3E7EF;
+  --border-strong: #CBD3E1;
+}
+
+body { font-family: 'Inter', sans-serif; font-size: 13px; background: var(--app-bg); color: #0B1220; }
+h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
+.font-mono, .num { font-family: 'IBM Plex Mono', monospace; font-variant-numeric: tabular-nums; }
+
+.erp-sidebar { background: var(--brand-primary); color: var(--brand-primary-fg); }
+.erp-sidebar a { color: var(--brand-primary-fg); }
+.erp-sidebar .nav-item { opacity: .82; }
+.erp-sidebar .nav-item:hover { opacity: 1; background: rgba(255,255,255,.08); }
+.erp-sidebar .nav-item.active { opacity: 1; background: rgba(255,255,255,.14); box-shadow: inset 3px 0 0 var(--brand-accent); }
+.erp-content { background: color-mix(in srgb, var(--brand-surface) 55%, #F4F6F9); }
+.brand-btn { background: var(--brand-primary); color: var(--brand-primary-fg); }
+.brand-btn:hover { filter: brightness(1.08); }
+.accent-btn { background: var(--brand-accent); color: var(--brand-accent-fg); }
+.accent-bar { background: var(--brand-accent); }
+.brand-text { color: var(--brand-primary); }
+.brand-border { border-color: var(--brand-primary); }
+
+.erp-table th { height: 34px; padding: 0 10px; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: #667085; background: #F8FAFC; position: sticky; top: 0; z-index: 1; text-align: left; white-space: nowrap; border-bottom: 1px solid var(--border-subtle); }
+.erp-table td { padding: 7px 10px; border-bottom: 1px solid #EEF1F5; vertical-align: middle; }
+.erp-table tr:hover td { background: #F7F9FC; }
+.erp-table td.n, .erp-table th.n { text-align: right; font-family: 'IBM Plex Mono', monospace; font-variant-numeric: tabular-nums; }
+
+.kanban-col { background: #EEF1F5; }
+.scroll-thin::-webkit-scrollbar { width: 6px; height: 6px; }
+.scroll-thin::-webkit-scrollbar-thumb { background: #CBD3E1; border-radius: 3px; }
+
+.mobile-shell { max-width: 520px; margin: 0 auto; min-height: 100vh; background: #F4F6F9; }
+.mobile-tile { min-height: 88px; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(6px);} to { opacity: 1; transform: none; } }
+.fade-up { animation: fadeUp .25s ease-out both; }

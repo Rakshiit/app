@@ -1,0 +1,34 @@
+[
+  {
+    "content": "Phase 1.5: Verified field masking fix + closed line-item amount leak",
+    "status": "completed"
+  },
+  {
+    "content": "Phase 1.5: Quick regression sweep on registers/dashboard — all green",
+    "status": "completed"
+  },
+  {
+    "content": "Phase 2a.1: Backend idempotency middleware — verified (replay = cached, no dupe)",
+    "status": "completed"
+  },
+  {
+    "content": "Phase 2a.1: Frontend offline queue engine (IndexedDB) — built + subscribe API",
+    "status": "completed"
+  },
+  {
+    "content": "Phase 2a.1: API client auto-enqueues mutations on offline/network error",
+    "status": "completed"
+  },
+  {
+    "content": "Phase 2a.2: Outbox UI panel + status bar in /mobile",
+    "status": "completed"
+  },
+  {
+    "content": "Phase 2a.2: Verified end-to-end offline→sync cycle + idempotency (no dupes)",
+    "status": "completed"
+  },
+  {
+    "content": "Phase 2b: AI Co-Pilot — plan + build next",
+    "status": "pending"
+  }
+]
